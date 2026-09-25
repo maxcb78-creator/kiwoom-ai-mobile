@@ -1,0 +1,56 @@
+name: Build Kiwoom AI V116 APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
+
+      - name: Install Android SDK 35
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Unpack V116 source
+        shell: bash
+        run: |
+          ZIP_FILE="$(find . -maxdepth 1 -type f -name '*.zip' | head -n 1)"
+          if [ -z "$ZIP_FILE" ]; then
+            echo "V116 source ZIP file was not found in repository root."
+            exit 1
+          fi
+          echo "Using source: $ZIP_FILE"
+          unzip -o "$ZIP_FILE"
+
+      - name: Build debug APK
+        run: |
+          gradle -p android_webview_source assembleDebug --no-daemon
+
+      - name: Rename APK
+        run: |
+          cp android_webview_source/app/build/outputs/apk/debug/app-debug.apk KiwoomAI_V116.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KiwoomAI_V116_APK
+          path: KiwoomAI_V116.apk
+          if-no-files-found: error
