@@ -24,7 +24,7 @@ jobs:
         with:
           gradle-version: "8.10.2"
 
-      - name:       - name: Install Android SDK 35
+      - name: Install Android SDK 35
         if: ${{ false }}
         run: |
           yes | sdkmanager --licenses >/dev/null || true
